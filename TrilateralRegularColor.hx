@@ -1,10 +1,9 @@
 package;
-import trilateralChange.AppGL;
-
 // Color pallettes
-import pallette.QuickARGB;
-import pallette.Gold;
-import pallette.PalletteNine;
+import pallette.simple.QuickARGB;
+import pallette.metal.Gold;
+import pallette.general.PalletteNine;
+import pallette.utils.ColorInt;
 // SVG path parser
 import justPath.*;
 import justPath.transform.ScaleContext;
@@ -19,7 +18,8 @@ import trilateral3.drawing.Fill;
 import trilateral3.drawing.Pen;
 // To trace on screen
 import kitGL.glWeb.DivertTrace;
-
+import kitGL.glWeb.InterleaveAlterGL;
+import kitGL.glWeb.InterleaveDataGL;
 import trilateral3.shape.Regular;
 import trilateral3.structure.RegularShape;
 import trilateral3.shape.StyleRegular;
@@ -27,20 +27,31 @@ import trilateral3.shape.IndexRange;
 import trilateral3.color.ColorInt;
 import trilateral3.structure.ARGB;
 
+import trilateral3.Trilateral;
+import trilateral3.drawing.Pen;
+import trilateral3.geom.FlatColorTriangles;
+import trilateral3.nodule.PenNodule;
+
+typedef ColorPalletInt = pallette.utils.ColorInt;
+typedef ColorT3Int = trilateral3.color.ColorInt;
 function main(){
     new TrilateralRegularColor( 1000, 1000 );
     var divertTrace = new DivertTrace();
     trace("TrilateralRegularColor example");
 }
-class TrilateralRegularColor extends AppGL {
+class TrilateralRegularColor extends InterleaveAlterGL {
     var regular: Regular;
     var arr: Array<IndexRange> = [];
     var nines: Array<Int>;
+    public var pen: Pen;
+    public var penNodule = new PenNodule();
     public function new( width: Int, height: Int ){
         super( width, height );
     }
     override
-    public function draw( pen: Pen ){
+    public function draw(){
+        interleaveDataGL = { get_data: penNodule.get_data, get_size: penNodule.get_size };
+        pen = penNodule.pen;
         regular = new Regular( pen );
         var c: Int = 1;//9*4;
         count = c;
@@ -64,14 +75,16 @@ class TrilateralRegularColor extends AppGL {
     var delayStart = 100;
     var count: Int;
     override
-    public function renderDraw( pen: Pen ){
+    public function renderDraw(){
         if( tick > delayStart ) {
             var currCount = count;
             for( i in 0...8 ){
                 var startEnd = arr[i];
                 pen.pos = startEnd.start;
                 var col3 = pen.colorType.getTriInt();
-                var col = blendRGB( col3.a, cast nines[ count ], dStep );
+                var colA: ColorPalletInt = col3.a;
+                var nine: ColorPalletInt = cast nines[ count ];
+                var col: Int = cast colA.blendRGB( nine, dStep );
                 pen.colorTriangles( col, Std.int( startEnd.end - startEnd.start + 1 ) );
                 count++;
             }
@@ -85,36 +98,5 @@ class TrilateralRegularColor extends AppGL {
             }
         }
         tick++;
-    }
-    public inline
-    function blendRGB( c0: Int, c1: Int, t: Float ): Int {
-        // seperate colors
-        var col: ColorInt = c0;
-        var r0 = col.red;
-        var g0 = col.green;
-        var b0 = col.blue;
-        var colNine: ColorInt = c1;
-        var r1 = colNine.red;
-        var g1 = colNine.green;
-        var b1 = colNine.blue;
-        // blend each channel colors
-        var v = smootherStep( t );
-        var r2 = blend( r0, r1, v );
-        var g2 = blend( g0, g1, v );
-        var b2 = blend( b0, b1, v );
-        // put together
-        var argb: ARGB = { a: 1., r: r2, g: g2, b: b2 };
-        var colInt: ColorInt = argb;
-        var c: Int = colInt;
-        return c;
-    }
-    inline
-    function blend( a: Float, b: Float, t: Float ): Float {
-        return a + t * ( b - a );
-    }
-    // Ken Perlin smoothStep 
-    inline 
-    function smootherStep( t: Float ): Float {
-      return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
     }
 }
