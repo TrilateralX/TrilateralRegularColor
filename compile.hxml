@@ -3,9 +3,7 @@
 -lib dsHelper
 -lib fracs
 -lib justPath
--lib trilateral3
-# change from trilateralBasic
--lib trilateralChange   
+-lib trilateral3  
 -lib pallette
 -lib hxPolyK
 -lib poly2trihx 
